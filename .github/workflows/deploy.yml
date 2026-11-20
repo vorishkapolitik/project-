@@ -1,0 +1,65 @@
+# Каждый день собирает свежие цены и публикует приложение на GitHub Pages.
+# Также запускается при каждом изменении в main и вручную (Actions → Run workflow).
+name: Обновить цены и опубликовать
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * *" # каждый день ~7:17 по Киеву
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Взять историю цен с опубликованного сайта
+        run: |
+          mkdir -p data
+          curl -fsSL "${{ steps.pages.outputs.base_url }}/data/history.json" -o data/history.json \
+            || rm -f data/history.json
+
+      - name: Собрать цены с zakaz.ua
+        run: |
+          node scripts/fetch-prices.mjs || {
+            echo "::warning::Не удалось собрать цены — оставляю вчерашние"
+            curl -fsSL "${{ steps.pages.outputs.base_url }}/data/beers.json" -o data/beers.json
+          }
+
+      - name: Собрать сайт
+        run: |
+          mkdir -p _site
+          cp -r index.html sw.js manifest.webmanifest css js icons vendor data _site/
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

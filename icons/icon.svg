@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#16110b"/>
+  <!-- ручка кружки -->
+  <path d="M352 196h34c30 0 50 22 50 52v56c0 30-20 52-50 52h-34" fill="none" stroke="#f6ecdf" stroke-width="30"/>
+  <!-- пиво -->
+  <rect x="112" y="150" width="252" height="270" rx="34" fill="#f2a93b"/>
+  <rect x="112" y="150" width="252" height="270" rx="34" fill="none" stroke="#f6ecdf" stroke-width="22"/>
+  <!-- пузырьки -->
+  <circle cx="176" cy="300" r="12" fill="#ffc861"/>
+  <circle cx="222" cy="352" r="9" fill="#ffc861"/>
+  <circle cx="300" cy="320" r="14" fill="#ffc861"/>
+  <!-- ценник -->
+  <path d="M186 230h104M186 262h70" stroke="#2a1903" stroke-width="18" stroke-linecap="round"/>
+  <!-- пена -->
+  <path d="M96 168c0-40 32-66 70-58 16-34 66-44 94-16 32-22 82-6 90 36 26 6 34 30 24 50H96z" fill="#fffaf2"/>
+</svg>
