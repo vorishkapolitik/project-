@@ -30,7 +30,7 @@ function loadZXing() {
     const s = document.createElement("script");
     s.src = "vendor/zxing.min.js";
     s.onload = resolve;
-    s.onerror = () => reject(new Error("Не удалось загрузить сканер"));
+    s.onerror = () => reject(new Error("scanner_load_failed"));
     document.head.appendChild(s);
   });
   return zxingLoading;

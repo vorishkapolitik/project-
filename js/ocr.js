@@ -9,7 +9,7 @@ function loadScript(src) {
     const s = document.createElement("script");
     s.src = src;
     s.onload = resolve;
-    s.onerror = () => reject(new Error("Не удалось загрузить распознавание текста"));
+    s.onerror = () => reject(new Error("ocr_load_failed"));
     document.head.appendChild(s);
   });
 }
@@ -61,16 +61,16 @@ async function prepare(file) {
   return c;
 }
 
-/** Возвращает распознанный текст. onProgress(доля 0..1, подпись) */
+/** Возвращает распознанный текст. onProgress(доля 0..1, этап: "loading" | "reading" | "done") */
 export async function readLabel(file, onProgress = () => {}) {
-  onProgress(0.05, "Загружаю распознавание…");
+  onProgress(0.05, "loading");
   const worker = await getWorker((m) => {
-    if (m.status === "recognizing text") onProgress(0.3 + m.progress * 0.7, "Читаю этикетку…");
-    else if (m.progress != null) onProgress(0.05 + m.progress * 0.25, "Загружаю распознавание…");
+    if (m.status === "recognizing text") onProgress(0.3 + m.progress * 0.7, "reading");
+    else if (m.progress != null) onProgress(0.05 + m.progress * 0.25, "loading");
   });
   const canvas = await prepare(file);
-  onProgress(0.3, "Читаю этикетку…");
+  onProgress(0.3, "reading");
   const { data } = await worker.recognize(canvas);
-  onProgress(1, "Готово");
+  onProgress(1, "done");
   return data.text || "";
 }
