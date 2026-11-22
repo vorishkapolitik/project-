@@ -1,5 +1,5 @@
 // Офлайн-режим: приложение и последние скачанные цены работают без интернета.
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = "runtime-v1";
 
@@ -8,6 +8,7 @@ const SHELL_FILES = [
   "index.html",
   "css/app.css",
   "js/app.js",
+  "js/i18n.js",
   "js/search.js",
   "js/scanner.js",
   "js/off.js",

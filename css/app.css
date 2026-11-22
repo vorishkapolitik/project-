@@ -63,6 +63,34 @@ img {
   font-size: 20px;
 }
 
+.lang {
+  display: flex;
+  flex: none;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+}
+
+.lang button {
+  min-width: 36px;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lang button.on {
+  background: var(--amber);
+  color: #2a1903;
+}
+
 main {
   max-width: 640px;
   margin: 0 auto;

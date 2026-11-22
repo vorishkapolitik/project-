@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0f5132"/>
+  <!-- капля воды -->
+  <path d="M256 84c-58 78-128 160-128 236a128 128 0 0 0 256 0c0-76-70-158-128-236z" fill="#6fdc9c"/>
+  <path d="M256 84c-58 78-128 160-128 236a128 128 0 0 0 256 0c0-76-70-158-128-236z" fill="none" stroke="#ffffff" stroke-width="16"/>
+  <!-- график цены -->
+  <polyline points="180,350 226,310 262,334 328,262" fill="none" stroke="#0f5132" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="328" cy="262" r="16" fill="#0f5132"/>
+  <!-- блик -->
+  <path d="M186 296c4-30 22-60 44-90" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" opacity=".7"/>
+</svg>
