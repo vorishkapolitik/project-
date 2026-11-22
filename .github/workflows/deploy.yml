@@ -39,11 +39,18 @@ jobs:
             curl -fsSL "${{ steps.pages.outputs.base_url }}/data/$f" -o "data/$f" || rm -f "data/$f"
           done
 
-      - name: Собрать цены с zakaz.ua
+      - name: Собрать цены на пиво с zakaz.ua (все города)
         run: |
           node scripts/fetch-prices.mjs || {
             echo "::warning::Не удалось собрать цены — оставляю вчерашние"
-            curl -fsSL "${{ steps.pages.outputs.base_url }}/data/beers.json" -o data/beers.json
+            BASE="${{ steps.pages.outputs.base_url }}"
+            curl -fsSL "$BASE/data/beers.json" -o data/beers.json
+            if curl -fsSL "$BASE/data/cities.json" -o data/cities.json; then
+              mkdir -p data/city
+              for c in $(node -e 'for (const c of require("./data/cities.json").cities) console.log(c.id)'); do
+                curl -fsSL "$BASE/data/city/$c.json" -o "data/city/$c.json" || true
+              done
+            fi
           }
 
       - name: Собрать цены на Aqua Миргород Detox
