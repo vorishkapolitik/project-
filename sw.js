@@ -1,5 +1,5 @@
 // Офлайн-режим: приложение и последние скачанные цены работают без интернета.
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL = `shell-${VERSION}`;
 const RUNTIME = "runtime-v1";
 
