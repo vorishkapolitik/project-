@@ -31,7 +31,7 @@ async function get(url, { json = true, headers = {}, tries = 3 } = {}) {
 
 // Объём в мл из названия: "0,33л", "1,2 л", "1л", "500 мл"
 export function volumeMl(title, fallback) {
-  const m = String(title).match(/(\d+(?:[.,]\d+)?)\s*(мл|л|l|ml)\b/i);
+  const m = String(title).match(/(\d+(?:[.,]\d+)?)\s*(мл|л|ml|l)(?![a-zа-яіїєґ])/i);
   if (m) {
     const v = parseFloat(m[1].replace(",", "."));
     return Math.round(/^м|^m/i.test(m[2]) ? v : v * 1000);

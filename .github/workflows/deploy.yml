@@ -1,4 +1,5 @@
-# Каждый день собирает свежие цены и публикует приложение на GitHub Pages.
+# Каждый день собирает свежие цены и публикует на GitHub Pages оба приложения:
+# Пивомер (/) и Detox Monitor (/detox/).
 # Также запускается при каждом изменении в main и вручную (Actions → Run workflow).
 name: Обновить цены и опубликовать
 
@@ -34,8 +35,9 @@ jobs:
       - name: Взять историю цен с опубликованного сайта
         run: |
           mkdir -p data
-          curl -fsSL "${{ steps.pages.outputs.base_url }}/data/history.json" -o data/history.json \
-            || rm -f data/history.json
+          for f in history.json detox-history.json; do
+            curl -fsSL "${{ steps.pages.outputs.base_url }}/data/$f" -o "data/$f" || rm -f "data/$f"
+          done
 
       - name: Собрать цены с zakaz.ua
         run: |
@@ -44,10 +46,18 @@ jobs:
             curl -fsSL "${{ steps.pages.outputs.base_url }}/data/beers.json" -o data/beers.json
           }
 
+      - name: Собрать цены на Aqua Миргород Detox
+        run: |
+          node scripts/fetch-detox.mjs || {
+            echo "::warning::Не удалось собрать цены Detox — оставляю вчерашние"
+            curl -fsSL "${{ steps.pages.outputs.base_url }}/data/detox.json" -o data/detox.json || true
+          }
+
       - name: Собрать сайт
         run: |
           mkdir -p _site
-          cp -r index.html sw.js manifest.webmanifest css js icons vendor data _site/
+          cp -r index.html sw.js manifest.webmanifest css js icons vendor data detox _site/
+          rm -f _site/detox/config.json
           touch _site/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3
