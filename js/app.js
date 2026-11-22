@@ -1,7 +1,7 @@
 import { BeerIndex } from "./search.js";
 import { startScanner } from "./scanner.js";
 import { offProduct } from "./off.js";
-import { t, lang, setLang, LANGS, styleName, countryName, chainName, locale } from "./i18n.js";
+import { t, lang, setLang, LANGS, styleName, countryName, chainName, cityName, locale } from "./i18n.js";
 
 const view = document.getElementById("view");
 const photoInput = document.getElementById("photo");
@@ -11,12 +11,29 @@ const state = {
   index: null,
   chains: {},
   history: null,
+  city: readCity(), // "" — вся Украина, иначе код города (kiev, odesa…)
+  cities: [], // список городов из data/cities.json
+  all: null, // данные по всей Украине (для пива, которого нет в выбранном городе)
   home: { q: "", tab: "deals", country: "", shown: 40 },
   label: null, // результат распознавания фото
   scanner: null,
 };
 
 /* ---------- утилиты ---------- */
+
+function readCity() {
+  try {
+    return localStorage.getItem("pivomer-city") || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveCity(c) {
+  try {
+    localStorage.setItem("pivomer-city", c);
+  } catch {}
+}
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -123,14 +140,48 @@ document.getElementById("lang").addEventListener("click", (e) => {
 
 /* ---------- данные ---------- */
 
-async function loadData() {
-  const res = await fetch("data/beers.json", { cache: "no-cache" });
+async function fetchJSON(url) {
+  const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(t("loadFail", { s: res.status }));
-  const data = await res.json();
-  state.data = data;
-  state.index = new BeerIndex(data.beers);
-  state.chains = Object.fromEntries(data.chains.map((c) => [c.id, c.name]));
+  return res.json();
 }
+
+function prepare(data) {
+  return { data, index: new BeerIndex(data.beers), chains: Object.fromEntries(data.chains.map((c) => [c.id, c.name])) };
+}
+
+// Цены выбранного города или всей Украины
+async function loadData() {
+  if (!state.cities.length) {
+    try {
+      state.cities = (await fetchJSON("data/cities.json")).cities || [];
+    } catch {
+      state.cities = [];
+    }
+  }
+  if (state.city && !state.cities.some((c) => c.id === state.city)) state.city = "";
+  let pack;
+  if (state.city) {
+    try {
+      pack = prepare(await fetchJSON(`data/city/${state.city}.json`));
+    } catch {
+      state.city = "";
+    }
+  }
+  if (!pack) pack = state.all || (state.all = prepare(await fetchJSON("data/beers.json")));
+  state.data = pack.data;
+  state.index = pack.index;
+  state.chains = { ...(state.all?.chains || {}), ...pack.chains };
+}
+
+async function loadAll() {
+  if (!state.all) state.all = prepare(await fetchJSON("data/beers.json"));
+  state.chains = { ...state.all.chains, ...state.chains };
+  return state.all;
+}
+
+const currentCityName = () => cityName(state.cities.find((c) => c.id === state.city)?.name || state.city);
+const cityOf = (id) => cityName(state.cities.find((c) => c.id === id)?.name || id);
 
 async function loadHistory() {
   if (state.history) return state.history;
@@ -210,6 +261,14 @@ function renderHome() {
       ${tabs.map(([id, label]) => `<button class="tab ${tab === id ? "on" : ""}" data-tab="${id}">${label}</button>`).join("")}
     </div>
     <div class="tabs">
+      ${
+        state.cities.length
+          ? `<select class="tab ${state.city ? "on" : ""}" id="city" aria-label="${esc(t("cityLabel"))}">
+        <option value="">${t("allUkraine")}</option>
+        ${state.cities.map((x) => `<option value="${esc(x.id)}" ${x.id === state.city ? "selected" : ""}>📍 ${esc(cityName(x.name))}</option>`).join("")}
+      </select>`
+          : ""
+      }
       <select class="tab ${c ? "on" : ""}" id="country" aria-label="${esc(t("country"))}">
         <option value="">${t("allCountries")}</option>
         ${countries.map((x) => `<option value="${esc(x)}" ${x === c ? "selected" : ""}>${esc(country(x))}</option>`).join("")}
@@ -261,6 +320,19 @@ function renderHome() {
     state.home.shown = 40;
     renderHome();
   });
+  view.querySelector("#city")?.addEventListener("change", async (e) => {
+    state.city = e.target.value;
+    saveCity(state.city);
+    state.home.shown = 40;
+    e.target.disabled = true;
+    try {
+      await loadData();
+    } catch (err) {
+      view.insertAdjacentHTML("afterbegin", `<div class="notice">⚠️ ${esc(err.message)}</div>`);
+      return;
+    }
+    renderHome();
+  });
   view.querySelector("#photoBtn").addEventListener("click", () => photoInput.click());
 }
 
@@ -304,8 +376,17 @@ function related(b) {
 }
 
 async function renderBeer(ean) {
-  const b = state.index.byEan.get(ean);
+  let b = state.index.byEan.get(ean);
+  let fromAll = false;
+  if (!b && state.city) {
+    try {
+      b = (await loadAll()).index.byEan.get(ean);
+      fromAll = !!b;
+    } catch {}
+    if (location.hash !== `#/b/${ean}`) return; // пользователь уже ушёл
+  }
   if (!b) return renderUnknown(ean);
+  const showCity = !state.city || fromAll;
 
   const p = minPrice(b);
   const pl = perLitre(p.price, b.ml);
@@ -326,8 +407,9 @@ async function renderBeer(ean) {
       </div>
     </div>
 
+    ${fromAll ? `<div class="notice">${esc(t("notInCity", { c: currentCityName() }))}</div>` : ""}
     <div class="summary">
-      <div class="stat"><b>${money(p.price)}</b><span>${esc(t("minPrice", { c: chain(p.chain) }))}</span></div>
+      <div class="stat"><b>${money(p.price)}</b><span>${esc(t("minPrice", { c: chain(p.chain) + (showCity && p.city ? `, ${cityOf(p.city)}` : "") }))}</span></div>
       <div class="stat"><b>${money(b.avg)}</b><span>${esc(t("avgPrice", { n: inStock.length || b.prices.length }))}</span></div>
       <div class="stat"><b>${pl ? money(pl) : "—"}</b><span>${t("perLitre")}</span></div>
     </div>
@@ -338,7 +420,9 @@ async function renderBeer(ean) {
       ${b.prices
         .map(
           (x) => `<li class="store ${x.stock ? "" : "out"}">
-        <div><b class="${x === p ? "best" : ""}">${esc(chain(x.chain))}</b>
+        <div><b class="${x === p ? "best" : ""}">${esc(chain(x.chain))}</b>${
+          showCity && x.city ? ` <span class="small muted">· ${esc(cityOf(x.city))}</span>` : !showCity && x.n > 1 ? ` <span class="small muted">· ${esc(t("nStores", { n: x.n }))}</span>` : ""
+        }
           <div class="small muted">${x.stock ? (x.old ? `<span class="badge">−${Math.round((1 - x.price / x.old) * 100)}%</span> ${x.until ? esc(t("until", { d: shortDate(x.until) })) : ""}` : t("inStock")) : t("outStock")}</div></div>
         <div class="p">${money(x.price)}${x.old ? `<s>${money(x.old)}</s>` : ""}</div>
         <a href="${esc(x.url)}" target="_blank" rel="noopener" aria-label="${esc(t("openStore"))}">↗</a>
@@ -346,7 +430,9 @@ async function renderBeer(ean) {
         )
         .join("")}
     </ul>
-    <p class="small muted">${esc(t("priceNote", { d: shortDate(state.data.updated) }))}</p>
+    <p class="small muted">${esc(
+      showCity ? t("priceNoteAll", { d: shortDate(state.data.updated) }) : t("priceNoteCity", { c: currentCityName(), d: shortDate(state.data.updated) })
+    )}</p>
 
     <div id="hist"></div>
 
@@ -369,7 +455,7 @@ async function renderBeer(ean) {
     const first = pts[0][1];
     const last = pts[pts.length - 1][1];
     const diff = last - first;
-    el.innerHTML = `<h2>${t("priceTrend")}</h2><div class="box">${sparkline(pts)}
+    el.innerHTML = `<h2>${t("priceTrend")}${state.city ? ` <span class="small muted">· ${t("trendAll")}</span>` : ""}</h2><div class="box">${sparkline(pts)}
       <p class="small muted">${esc(t("since", { d: shortDate(pts[0][0]) }))} ${money(first)} → ${money(last)}
       ${diff ? `<span class="badge ${diff < 0 ? "green" : ""}">${diff > 0 ? "+" : ""}${Math.round((diff / first) * 100)}%</span>` : ""}</p></div>`;
   });

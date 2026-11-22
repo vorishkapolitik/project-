@@ -41,7 +41,14 @@ const DICT = {
     outStock: "немає в наявності",
     until: "до {d}",
     openStore: "Відкрити в магазині",
-    priceNote: "Ціни інтернет-магазинів мереж (Київ), оновлено {d}. У звичайних магазинах та інших містах ціна може трохи відрізнятися.",
+    priceNoteCity: "Ціни інтернет-магазинів мереж у місті {c} (оновлено {d}). У звичайних магазинах ціна може трохи відрізнятися.",
+    priceNoteAll: "Мінімальна ціна кожної мережі по всій Україні, місто вказано поруч із мережею (оновлено {d}). Оберіть місто на головній, щоб бачити ціни тільки в ньому.",
+    allUkraine: "🇺🇦 Уся Україна",
+    cityLabel: "Місто",
+    nStores: "{n} маг.",
+    inCity: "у місті {c}",
+    notInCity: "У місті {c} цього пива немає в інтернет-магазинах мереж — показано ціни по всій Україні.",
+    trendAll: "по Україні",
     priceTrend: "Динаміка ціни",
     trendAria: "Динаміка мінімальної ціни",
     since: "З {d}:",
@@ -132,7 +139,14 @@ const DICT = {
     outStock: "нет в наличии",
     until: "до {d}",
     openStore: "Открыть в магазине",
-    priceNote: "Цены интернет-магазинов сетей (Киев), обновлено {d}. В обычных магазинах и других городах цена может немного отличаться.",
+    priceNoteCity: "Цены интернет-магазинов сетей в городе {c} (обновлено {d}). В обычных магазинах цена может немного отличаться.",
+    priceNoteAll: "Минимальная цена каждой сети по всей Украине, город указан рядом с сетью (обновлено {d}). Выберите город на главной, чтобы видеть цены только в нём.",
+    allUkraine: "🇺🇦 Вся Украина",
+    cityLabel: "Город",
+    nStores: "{n} маг.",
+    inCity: "в городе {c}",
+    notInCity: "В городе {c} этого пива нет в интернет-магазинах сетей — показаны цены по всей Украине.",
+    trendAll: "по Украине",
     priceTrend: "Динамика цены",
     trendAria: "Динамика минимальной цены",
     since: "С {d}:",
@@ -223,7 +237,14 @@ const DICT = {
     outStock: "out of stock",
     until: "until {d}",
     openStore: "Open in store",
-    priceNote: "Online prices of retail chains (Kyiv), updated {d}. Prices in regular stores and other cities may differ slightly.",
+    priceNoteCity: "Online prices of retail chains in {c} (updated {d}). Prices in regular stores may differ slightly.",
+    priceNoteAll: "Each chain's lowest price anywhere in Ukraine, with the city next to the chain (updated {d}). Pick a city on the home screen to see prices there only.",
+    allUkraine: "🇺🇦 All of Ukraine",
+    cityLabel: "City",
+    nStores: "{n} stores",
+    inCity: "in {c}",
+    notInCity: "This beer isn't sold online in {c} — showing prices across Ukraine.",
+    trendAll: "across Ukraine",
     priceTrend: "Price history",
     trendAria: "Lowest price over time",
     since: "Since {d}:",
@@ -316,6 +337,19 @@ const CHAINS = {
   zaraz: ["За Раз", "За Раз", "Za Raz"],
   ekomarket: ["ЕкоМаркет", "ЭкоМаркет", "EkoMarket"],
 };
+
+// Города: в данных — на украинском
+const CITIES = {
+  Київ: ["Киев", "Kyiv"], Харків: ["Харьков", "Kharkiv"], Одеса: ["Одесса", "Odesa"], Львів: ["Львов", "Lviv"],
+  Дніпро: ["Днепр", "Dnipro"], Вінниця: ["Винница", "Vinnytsia"], Житомир: ["Житомир", "Zhytomyr"],
+  Рівне: ["Ровно", "Rivne"], "Івано-Франківськ": ["Ивано-Франковск", "Ivano-Frankivsk"], Чернівці: ["Черновцы", "Chernivtsi"],
+  "Кривий Ріг": ["Кривой Рог", "Kryvyi Rih"], Полтава: ["Полтава", "Poltava"], Запоріжжя: ["Запорожье", "Zaporizhzhia"],
+};
+
+export function cityName(c) {
+  if (!c || lang === "uk") return c;
+  return CITIES[c]?.[idx()] || c;
+}
 
 const KEY = "pivomer-lang";
 
